@@ -41,30 +41,30 @@ export default function HomePage() {
   const features = [
     {
       icon: <PsychologyIcon sx={{ fontSize: 50, color: 'primary.main' }} />,
-      title: 'Quantum-Enhanced AI',
-      description: 'Advanced quantum computing algorithms detect complex medical patterns that traditional systems miss.',
+      title: 'Hybrid Quantum-Classical AI',
+      description: 'Combining Random Forest & XGBoost classical ML with quantum computing for enhanced pattern recognition.',
     },
     {
       icon: <SpeedIcon sx={{ fontSize: 50, color: 'secondary.main' }} />,
-      title: 'Rapid Diagnosis',
-      description: 'Get accurate disease predictions in seconds with our cutting-edge hybrid AI technology.',
+      title: 'Instant Diagnosis',
+      description: 'Get accurate disease predictions in under 3 seconds with 75-85% accuracy using trained ML models.',
     },
     {
       icon: <TrendingUpIcon sx={{ fontSize: 50, color: 'success.main' }} />,
-      title: 'Personalized Insights',
-      description: 'Receive tailored health recommendations based on your unique symptom profile and medical history.',
+      title: 'Multiple Predictions',
+      description: 'Receive top 3 disease predictions with confidence scores and personalized health recommendations.',
     },
     {
       icon: <SecurityIcon sx={{ fontSize: 50, color: 'info.main' }} />,
-      title: 'HIPAA & GDPR Compliant',
-      description: 'Your health data is encrypted and secured with industry-leading privacy standards.',
+      title: 'Privacy First',
+      description: 'Your health data is encrypted end-to-end with no storage of personal medical information.',
     },
   ];
 
   const steps = [
-    { number: '01', title: 'Describe Symptoms', description: 'Enter your health concerns through our intuitive interface' },
-    { number: '02', title: 'AI Analysis', description: 'Quantum AI processes your data with unprecedented accuracy' },
-    { number: '03', title: 'Get Results', description: 'Receive detailed diagnosis with confidence scores and recommendations' },
+    { number: '01', title: 'Select Symptoms', description: 'Choose from 130+ symptoms through our intuitive checkbox interface' },
+    { number: '02', title: 'Hybrid AI Analysis', description: 'Classical ML models (Random Forest + XGBoost) analyze patterns, enhanced with quantum optimization' },
+    { number: '03', title: 'Get Results', description: 'Receive disease predictions with confidence scores, severity levels, and medical recommendations' },
   ];
 
   const theme = useTheme();

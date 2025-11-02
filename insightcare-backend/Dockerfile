@@ -10,10 +10,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
+# Install system dependencies for ML packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    g++ \
+    gfortran \
+    build-essential \
     postgresql-client \
+    libopenblas-dev \
+    liblapack-dev \
+    pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching

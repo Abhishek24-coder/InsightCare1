@@ -50,23 +50,33 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add security headers middleware (add first for all responses)
+# Configure CORS to allow frontend access
+# Move CORS middleware earlier so preflight (OPTIONS) is handled reliably
+allowed_origins = [
+    FRONTEND_URL,
+    "https://insight-care-rust.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+]
+# Filter out any empty/None values
+allowed_origins = [o for o in allowed_origins if o]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
+
+# Add security headers middleware (add after CORS so headers are preserved)
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Add logging middleware
 app.add_middleware(LoggingMiddleware)
 
-# Configure CORS to allow frontend access
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        FRONTEND_URL,
-        "http://localhost:3000",
-        "http://localhost:3001",
-    ],  # Frontend URLs
-    allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all headers
-)
+# Log configured origins to help debugging CORS in deployments
+logger.info("CORS allowed origins configured", allowed_origins=allowed_origins)
 
 # Register API routers with /api prefix
 app.include_router(auth_router, prefix="/api")
