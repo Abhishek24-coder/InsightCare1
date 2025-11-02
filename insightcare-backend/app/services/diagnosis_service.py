@@ -152,8 +152,13 @@ def create_diagnosis(
     Returns:
         Created Diagnosis instance
     """
-    # Generate predictions using mock AI
-    predictions_data = mock_ai_diagnosis(request_data.symptoms)
+    # Try to use ML models, fallback to mock if unavailable
+    try:
+        from app.services.ml_service import get_ml_diagnosis
+        predictions_data = get_ml_diagnosis(request_data.symptoms)
+    except Exception as e:
+        print(f"⚠️  ML service error, using mock: {e}")
+        predictions_data = mock_ai_diagnosis(request_data.symptoms)
 
     # Create diagnosis record
     diagnosis = Diagnosis(

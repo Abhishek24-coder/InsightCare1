@@ -11,6 +11,7 @@ from app.api.diagnosis import router as diagnosis_router, diagnose_router
 from app.api.health import router as health_router
 from app.api.password_reset import router as password_reset_router
 from app.api.email_verification import router as email_verification_router
+from app.api.ml_api import router as ml_router  # ML API endpoints
 from app.config import FRONTEND_URL
 from app.middleware.rate_limit import limiter
 from app.middleware.logging import LoggingMiddleware
@@ -74,6 +75,7 @@ app.include_router(diagnose_router, prefix="/api")  # Frontend-compatible endpoi
 app.include_router(health_router, prefix="/api")
 app.include_router(password_reset_router, prefix="/api")
 app.include_router(email_verification_router, prefix="/api")
+app.include_router(ml_router, prefix="/api")  # ML prediction endpoints
 
 logger.info("InsightCare API initialized", version="1.0.0")
 
