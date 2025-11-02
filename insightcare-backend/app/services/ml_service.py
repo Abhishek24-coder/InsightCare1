@@ -1,6 +1,7 @@
 """
-ML Service - Integration with trained disease diagnosis models
-Loads Abhishek's ML models and provides prediction API
+ML Service - Hybrid Classical-Quantum Disease Diagnosis
+Integrates Classical ML (RF + XGBoost) with Quantum ML (QSVM)
+Uses weighted ensemble: 70% Classical + 30% Quantum
 """
 
 from typing import List, Dict
@@ -11,41 +12,62 @@ from pathlib import Path
 ml_module_path = Path(__file__).parent.parent / "ml_module"
 sys.path.insert(0, str(ml_module_path))
 
-from predict import DiseasePredictor
+from hybrid_predictor import HybridPredictor
 
 
 class MLDiagnosisService:
     """
-    Service for making disease predictions using trained ML models
+    Service for hybrid classical-quantum disease predictions
+    Uses weighted ensemble of RF + XGBoost + QSVM
     """
     
-    def __init__(self):
-        """Initialize ML models on startup"""
+    def __init__(self, use_hybrid: bool = True):
+        """
+        Initialize ML models on startup
+        
+        Args:
+            use_hybrid: Whether to use hybrid quantum-classical ensemble (default: True)
+        """
         self.predictor = None
+        self.use_hybrid = use_hybrid
         self._load_models()
     
     def _load_models(self):
-        """Load the trained Random Forest and XGBoost models"""
+        """Load the hybrid ensemble (Classical + Quantum models)"""
         try:
-            print("🔄 Loading ML models...")
-            self.predictor = DiseasePredictor()
-            print("✅ ML models loaded successfully")
+            print("🔄 Loading Hybrid Ensemble...")
+            print("   Classical: Random Forest + XGBoost")
+            print("   Quantum: QSVM (if available)")
+            
+            self.predictor = HybridPredictor()
+            
+            print("\n✅ Hybrid ensemble initialized")
             print(f"   • Available symptoms: {len(self.predictor.get_available_symptoms())}")
             print(f"   • Available diseases: {len(self.predictor.get_available_diseases())}")
+            print(f"   • Quantum available: {self.predictor.is_quantum_available()}")
+            
         except Exception as e:
-            print(f"❌ Error loading ML models: {e}")
+            print(f"❌ Error loading hybrid ensemble: {e}")
+            print("   Falling back to classical-only mode")
             self.predictor = None
     
     def is_available(self) -> bool:
         """Check if ML models are loaded and available"""
         return self.predictor is not None
     
-    def predict_disease(self, symptoms: List[str]) -> List[Dict]:
+    def is_quantum_available(self) -> bool:
+        """Check if quantum model is available"""
+        if not self.is_available():
+            return False
+        return self.predictor.is_quantum_available()
+    
+    def predict_disease(self, symptoms: List[str], use_quantum: bool = True) -> List[Dict]:
         """
-        Predict disease from symptoms using ML models
+        Predict disease using hybrid classical-quantum ensemble
         
         Args:
             symptoms: List of symptom strings
+            use_quantum: Whether to use quantum model in ensemble (default: True)
             
         Returns:
             List of prediction dictionaries with disease, confidence, etc.
@@ -53,65 +75,55 @@ class MLDiagnosisService:
         if not self.is_available():
             raise RuntimeError("ML models not loaded")
         
-        # Validate symptoms
-        validation = self.predictor.validate_symptoms(symptoms)
+        # Use hybrid prediction
+        hybrid_result = self.predictor.predict_hybrid(symptoms, use_quantum=use_quantum)
         
-        if not validation['valid_symptoms']:
+        # Check for errors
+        if 'error' in hybrid_result:
             return [{
-                "disease": "Unable to diagnose",
-                "confidence": 0.0,
+                "disease": hybrid_result['disease'],
+                "confidence": hybrid_result['confidence'],
                 "severity": "unknown",
-                "description": "No valid symptoms provided",
+                "description": hybrid_result['error'],
                 "recommendations": [
                     "Please provide valid symptom names",
                     f"Available symptoms: {', '.join(self.predictor.get_available_symptoms()[:10])}...",
                 ],
-                "model_used": "validation",
-                "valid_symptoms": [],
-                "invalid_symptoms": validation['invalid_symptoms']
+                "model_used": hybrid_result['ensemble_method'],
+                "valid_symptoms": hybrid_result.get('valid_symptoms', []),
+                "invalid_symptoms": hybrid_result.get('invalid_symptoms', []),
+                "ensemble_info": {
+                    "method": hybrid_result['ensemble_method'],
+                    "quantum_used": False
+                }
             }]
         
-        # Get predictions from both models
-        ensemble_result = self.predictor.predict_with_both_models(validation['valid_symptoms'])
+        # Build response with hybrid results
+        disease = hybrid_result['disease']
+        confidence = hybrid_result['confidence']
         
-        # Primary prediction (Random Forest)
-        rf_pred = ensemble_result['random_forest']
-        
-        # Build response
-        predictions = []
-        
-        # Primary prediction
-        primary = {
-            "disease": rf_pred['predicted_disease'],
-            "confidence": rf_pred['confidence_percentage'] / 100,  # Convert to 0-1 scale
-            "severity": self._determine_severity(rf_pred['confidence_percentage']),
-            "description": self._get_disease_description(rf_pred['predicted_disease']),
-            "recommendations": self._get_recommendations(rf_pred['predicted_disease']),
-            "model_used": "random_forest",
-            "valid_symptoms": validation['valid_symptoms'],
-            "invalid_symptoms": validation['invalid_symptoms']
-        }
-        predictions.append(primary)
-        
-        # Add XGBoost prediction if different
-        xgb_pred = ensemble_result['xgboost']
-        if xgb_pred['predicted_disease'] != rf_pred['predicted_disease']:
-            secondary = {
-                "disease": xgb_pred['predicted_disease'],
-                "confidence": xgb_pred['confidence_percentage'] / 100,
-                "severity": self._determine_severity(xgb_pred['confidence_percentage']),
-                "description": self._get_disease_description(xgb_pred['predicted_disease']),
-                "recommendations": self._get_recommendations(xgb_pred['predicted_disease']),
-                "model_used": "xgboost",
-                "valid_symptoms": validation['valid_symptoms'],
-                "invalid_symptoms": validation['invalid_symptoms']
+        prediction = {
+            "disease": disease,
+            "confidence": confidence,  # Already in 0-1 scale
+            "severity": self._determine_severity(confidence * 100),
+            "description": self._get_disease_description(disease),
+            "recommendations": self._get_recommendations(disease),
+            "model_used": hybrid_result['ensemble_method'],
+            "valid_symptoms": hybrid_result.get('valid_symptoms', []),
+            "invalid_symptoms": hybrid_result.get('invalid_symptoms', []),
+            "ensemble_info": {
+                "method": hybrid_result['ensemble_method'],
+                "models_used": hybrid_result.get('models_used', []),
+                "quantum_available": self.is_quantum_available(),
+                "quantum_used": use_quantum and self.is_quantum_available(),
+                "classical_prediction": hybrid_result.get('classical_prediction'),
+                "quantum_prediction": hybrid_result.get('quantum_prediction'),
+                "weights": hybrid_result.get('weights'),
+                "voting_details": hybrid_result.get('voting_details')
             }
-            predictions.append(secondary)
+        }
         
-        # Sort by confidence
-        predictions.sort(key=lambda x: x['confidence'], reverse=True)
-        
-        return predictions
+        return [prediction]
     
     def _determine_severity(self, confidence: float) -> str:
         """Determine severity based on confidence level"""
@@ -165,30 +177,31 @@ class MLDiagnosisService:
         return self.predictor.get_available_diseases()
 
 
-# Global ML service instance (loaded on startup)
-ml_service = MLDiagnosisService()
+# Global ML service instance with hybrid ensemble (loaded on startup)
+ml_service = MLDiagnosisService(use_hybrid=True)
 
 
-def get_ml_diagnosis(symptoms: List[str]) -> List[Dict]:
+def get_ml_diagnosis(symptoms: List[str], use_quantum: bool = True) -> List[Dict]:
     """
-    Get ML-powered disease diagnosis from symptoms
+    Get hybrid classical-quantum disease diagnosis from symptoms
     
     Args:
         symptoms: List of symptom strings
+        use_quantum: Whether to use quantum model in ensemble (default: True)
         
     Returns:
-        List of prediction dictionaries
+        List of prediction dictionaries with ensemble results
     """
     if not ml_service.is_available():
         # Fallback to mock diagnosis if ML not available
         from app.services.diagnosis_service import mock_ai_diagnosis
-        print("⚠️  ML models not available, using mock diagnosis")
+        print("⚠️  Hybrid ensemble not available, using mock diagnosis")
         return mock_ai_diagnosis(symptoms)
     
     try:
-        return ml_service.predict_disease(symptoms)
+        return ml_service.predict_disease(symptoms, use_quantum=use_quantum)
     except Exception as e:
-        print(f"❌ ML prediction error: {e}")
+        print(f"❌ Hybrid prediction error: {e}")
         # Fallback to mock
         from app.services.diagnosis_service import mock_ai_diagnosis
         return mock_ai_diagnosis(symptoms)
@@ -197,3 +210,8 @@ def get_ml_diagnosis(symptoms: List[str]) -> List[Dict]:
 def is_ml_available() -> bool:
     """Check if ML models are loaded and ready"""
     return ml_service.is_available()
+
+
+def is_quantum_available() -> bool:
+    """Check if quantum model is available in the ensemble"""
+    return ml_service.is_quantum_available()
