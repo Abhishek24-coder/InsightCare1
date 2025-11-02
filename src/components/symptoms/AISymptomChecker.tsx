@@ -138,9 +138,9 @@ export default function AISymptomChecker() {
             <Typography variant="h3" component="h1" fontWeight={700}>
               AI Symptom Checker
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Hybrid Quantum-Classical Ensemble: RF + XGBoost + QSVM
-            </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Powered by Hybrid Quantum-Classical AI: RF + XGBoost + QSVM
+          </Typography>
           </Box>
         </Box>
         <Typography variant="body1" color="text.secondary">
