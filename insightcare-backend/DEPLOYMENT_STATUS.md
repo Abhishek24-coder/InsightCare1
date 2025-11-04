@@ -11,7 +11,7 @@ The hybrid classical-quantum ensemble is **implemented and operational**!
 ```
 User Symptoms
      ↓
-Hybrid Predictor (Ready)
+Hybrid Predictor (Ready)/
      ├─→ Classical Models (70% weight) ✅ ACTIVE
      │    ├─→ Random Forest (100% accuracy) ✅
      │    └─→ XGBoost (100% accuracy) ✅
