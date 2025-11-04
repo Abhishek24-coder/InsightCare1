@@ -12,7 +12,7 @@ from pathlib import Path
 ml_module_path = Path(__file__).parent.parent / "ml_module"
 sys.path.insert(0, str(ml_module_path))
 
-from hybrid_predictor import HybridPredictor
+from app.ml_module.hybrid_predictor import HybridPredictor
 
 
 class MLDiagnosisService:
