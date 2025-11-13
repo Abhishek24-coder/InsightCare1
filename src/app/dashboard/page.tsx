@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import DiagnosisDisplay from '@/components/dashboard/DiagnosisDisplay';
 import { DiagnosisResult } from '@/lib/api/symptomsApi';
+import { symptomsApi } from '@/lib/api/symptomsApi';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -21,6 +22,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [showMockData, setShowMockData] = useState(true); // Set to true to show example data
   const [diagnosisResults, setDiagnosisResults] = useState<DiagnosisResult[]>([]);
+  const [healthHistory, setHealthHistory] = useState<DiagnosisResult[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -76,6 +79,21 @@ export default function DashboardPage() {
       setDiagnosisResults(mockResults);
     }
   }, [showMockData]);
+
+  // Load health history
+  const loadHealthHistory = async () => {
+    if (!session) return;
+    
+    setIsLoadingHistory(true);
+    try {
+      const history = await symptomsApi.getHistory();
+      setHealthHistory(history);
+    } catch (error) {
+      console.error('Failed to load health history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   if (status === 'loading') {
     return (
@@ -141,7 +159,8 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              sx={{ height: '100%' }}
+              sx={{ height: '100%', cursor: 'pointer', '&:hover': { boxShadow: 6 } }}
+              onClick={loadHealthHistory}
             >
               <CardContent sx={{ textAlign: 'center', py: 4 }}>
                 <TimelineIcon sx={{ fontSize: 60, color: 'success.main', mb: 2 }} />
@@ -149,7 +168,7 @@ export default function DashboardPage() {
                   Health History
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  View past diagnoses
+                  {isLoadingHistory ? 'Loading...' : `View past diagnoses (${healthHistory.length})`}
                 </Typography>
               </CardContent>
             </MotionCard>
@@ -197,6 +216,29 @@ export default function DashboardPage() {
             </Alert>
 
             <DiagnosisDisplay results={diagnosisResults} />
+          </Box>
+        )}
+
+        {/* Health History Section */}
+        {healthHistory.length > 0 && (
+          <Box sx={{ mt: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h4" fontWeight={600}>
+                Your Health History
+              </Typography>
+              <Button
+                variant="outlined"
+                onClick={() => setHealthHistory([])}
+              >
+                Close History
+              </Button>
+            </Box>
+
+            <Alert severity="success" sx={{ mb: 3 }}>
+              <strong>Health History:</strong> Showing {healthHistory.length} past diagnosis report(s).
+            </Alert>
+
+            <DiagnosisDisplay results={healthHistory} />
           </Box>
         )}
       </Box>
