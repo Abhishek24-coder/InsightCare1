@@ -1,0 +1,29 @@
+fastapi==0.109.0
+uvicorn[standard]==0.22.0
+sqlalchemy==2.0.31
+psycopg[binary]==3.1.18
+pydantic==2.8.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.1
+python-multipart==0.0.6
+alembic==1.13.1
+google-auth==2.23.0
+requests==2.32.5
+
+# Email functionality
+python-dotenv==1.0.1
+aiosmtplib==3.0.1
+email-validator==2.1.0
+
+# Rate limiting
+slowapi==0.1.9
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx<0.28  # Version 0.28+ has breaking changes with TestClient
+pytest-cov==4.1.0
+
+# Logging
+structlog==24.1.0
